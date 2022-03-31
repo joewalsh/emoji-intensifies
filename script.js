@@ -39,21 +39,40 @@ function makeTextAnImage(value) {
   return canvas;
 }
 
+function makeImage(dataURL) {
+  // Canvas dimensions
+  const canvas = document.createElement("canvas");
+  canvas.width = 64;
+  canvas.height = 64;
+
+  let context = canvas.getContext("2d");
+  context.font = "24px monospace";
+
+  var img = new Image();
+  img.src = dataURL;
+  context.drawImage(img,0,0,64,64)
+  return canvas;
+}
+
 // Random + or - int between range rounded
 function getRandomInt(min, max) {
-  min = Math.ceil(min);
-  max = Math.floor(max);
-  return Math.round(Math.floor(Math.random() * (max - min + 1)) + min);
+  return Math.random() * (max - min) + min
+}
+
+function makeFileShakyBoi(dataURL, intensity) {
+  if(!dataURL) return
+  makeShakyBoi(makeImage(dataURL), intensity)
+}
+
+function makeEmojiShakyBoi(char, intensity) {
+  if(!char) return
+  makeShakyBoi(makeTextAnImage(char), intensity)
 }
 
 // Make the shaky image
-function makeShakyBoi(char, intensity) {
-
-  if(!char) return
+function makeShakyBoi(image, intensity) {
+  if(!image) return
   
-  // Get emoji as canvas
-  const emojiInCanvas = makeTextAnImage(char);
-
   // Use this canvas to create frames
   const fgCanvas = document.createElement('canvas')
   const fgContext = fgCanvas.getContext("2d");
@@ -65,7 +84,7 @@ function makeShakyBoi(char, intensity) {
   for (let i = 0; i < 42; i++) {
     fgCanvas.width = fgCanvas.width;
     fgContext.drawImage(
-      emojiInCanvas,
+      image,
       getRandomInt(-intensity, intensity),
       getRandomInt(-intensity, intensity)
     );
@@ -96,25 +115,43 @@ function makeShakyBoi(char, intensity) {
 
 
 let intensityVal = 2
+var dataURL = ""
+var emoji = ""
 
-const textInput = document.querySelector("input[type=text]")
+const textInput = document.getElementById("textInput")
 textInput.addEventListener('input', (e) => {
-  textInput.value = e.data
-  makeShakyBoi(e.data, intensityVal)
+  dataURL = ""
+  emoji = e.data
+  textInput.value = emoji
+  makeEmojiShakyBoi(emoji, intensityVal)
 })
 
 const slider = document.querySelector("input[type=range]")
-slider.addEventListener('change', () => {
+slider.addEventListener('change', (e) => {
   intensityVal = slider.value
-  makeShakyBoi(textInput.value, intensityVal)
+  if (dataURL === "") {
+    makeEmojiShakyBoi(emoji, intensityVal)
+  } else {
+    makeFileShakyBoi(dataURL, intensityVal)
+  }
+})
+
+const fileInput = document.getElementById("fileInput")
+fileInput.addEventListener("change", (e) => {
+  const reader = new FileReader()
+  reader.onload = (e) => {
+    dataURL = e.target.result
+    makeFileShakyBoi(dataURL, intensityVal)
+  }
+  reader.onerror = (e) => {
+    console.error("Unable to read file", e.target.error)
+  }
+  reader.readAsDataURL(e.target.files[0])
 })
 
 const randomStarts = ['👀', '🤡', '🤫', '😐', '🥶']
+emoji = randomStarts[Math.floor(Math.random() * randomStarts.length)]
+textInput.value = emoji
 
-textInput.value = randomStarts[Math.floor(Math.random() * randomStarts.length)]
-
-makeShakyBoi(textInput.value, intensityVal)
-
-
-
+makeEmojiShakyBoi(textInput.value, intensityVal)
 
